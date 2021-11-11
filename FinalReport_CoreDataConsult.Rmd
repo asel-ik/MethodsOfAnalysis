@@ -1,7 +1,7 @@
 ---
-title: "Does Black Saber Software's Human Resources department use biased systems?"
+title: "New talent acquisition systems and current employees promotion processes analysis"
 author: "Report prepared for Black Saber Software by Core Data Consultancy"
-date: '2021-04-21'
+date: '2021-04-28'
 output:
   pdf_document:
     template: report.tex
@@ -12,8 +12,7 @@ output:
     toc_depth: '2'
     df_print: paged
 lang: en
-subtitle: Report on potential bias in hiring and remuneration processes at Black Saber
-  Software
+subtitle: "Report on potential bias at Black Saber Software"
 titlepage: yes
 titlepage-color: 83A5BA
 titlepage-text-color: FFFFFF
@@ -21,55 +20,94 @@ titlepage-rule-color: FFFFFF
 titlepage-rule-height: 2
 ---
 
-```{r, message = FALSE, echo=FALSE}
+```{r, message = FALSE, echo=FALSE, warning=FALSE}
 library(tidyverse)
-# this should supress all code and messages
-knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, eval = TRUE)
+
+knitr::opts_chunk$set(include=TRUE, echo = FALSE, warning = FALSE, eval = TRUE)
 ```
 
-# General comments (you can delete this section)
-
-_You can delete this section, and if you want to check what it said, just open a template from the package again. You don't have to use this particular template, but you DO need to write you report in RMarkdown and include a cover page._
-
-_The cover page must have:_
-
-*	_A title and subtitle_
-* _"Report prepared for Black Saber Software by" your company name_
-*	_Date (assessment submission date is fine)_
-
-_You can change the colour of this cover to any colour you would like by replacing 6C3082 in the YAML above (line 11) to another hex code. You could use this tool to help you:_ https://htmlcolorcodes.com/color-picker/
 
 \newpage
 # Executive summary
 
-_Guidelines for the executive summary:_
+## Background
 
-* _No more than two pages_
-* _Language is appropriate for a non-technical audience_
-* _Bullet points are used where appropriate_
-*	_A small number of key visualizations and/or tables are included_
-*	_All three research questions are addressed_
+In 2020, 613 new graduates applied to open positions in Data and Software teams of Toronto-based Black Saber Software. The candidates have gone through three phases in the recruitment process, which were completely assessed by a piloted AI-automated system. This report analyzed concerns raised by Black Saber Software to uncover hidden biases in their AI-automated hiring along with human assessed promoting and remunerating processes. The concerns were formulated in three main questions: (1) Is the AI-automated hiring process biased against any category of gender? (2)  Are employees promoted fairly based on their talents and professional achievements? (3) Is salary calculated according to employees' performance?
+
+
+## Key findings
+
+Regrettably, the analysis exposed a strong unfairness toward female candidates and employees manifested both in the AI-automated systems and human-led assessments.
+
+- Exploratory data analysis revealed that despite of roughly similar skills scores, twice as fewer female candidates reached the third phase of recruitment (Figure 1).
+
+
+![Gender categories were represented equally in the first two phases with the third phase losing the "Prefer not to say" category and twice as low women than men](images/gender_es.png)
+
+- A statistical model revealed that women lose about 10% in their leadership and speaking skills score due to the means of collecting assessment data - a pre-recorded video was employed, easily revealing candidates' gender association.
+
+- A statistical model predicted that women employees had 60% lower odds of being promoted.
+
+- To explore salary calculation criteria, a test on several models selected employees' gender as a main influential category. Thus, female employees were predicted to receive $2,642 less than their male co-workers.
+
+
+
+## Strengths and limitations
+
+Due to various external reasons and my professional judgement of appropriateness of choices, the report demonstrated the following strengths and limitations.
+
+- The report is completely reproducible with easy adjustment of the models.
+
+- Beyond the scope of the analysis, I have uncovered some unsettling patterns in human interviewers’ behavior in the last phase of the hiring. As per Figure 2, the interviewers consistently scored men higher than women.
+
+
+![Human interviewers' scoring of men and women candidates](images/int1_2.png)
+
+- Limitation of the analysis to four years of the current employees’ data might have influenced the overall outcomes of the tests.
+
+-  For research question 2, instead of (or in addition to) number of promotions, exploring an increase in salaries might have produced alternative results.
+
 
 
 \newpage
 # Technical report
-_This part of the report is much more comprehensive than the executive summary. The audience is statistics/data-minded people, but you should NOT include code or unformatted R output here._
-
 
 ## Introduction
 
-_Provide a brief introduction to your report and outline what the report will cover. This section is valuable for setting scope and expectations. _
+
+Black Saber Software has piloted an AI service to screen job applicants via timed technical and writing tasks as well as pre-recorded videos to assess effectiveness of candidates' communication and leadership skills. This report analyzed the AI-automated candidates selection process with the main emphasis on uncovering hidden biases against particular categories of gender as that is the only concerning element currently, since People and Talent department had not yet collected data on candidates' and employees' ethnicity. Additionally, Black Saber Software, being aware of recent scandals in media regarding potential bias in remuneration processes in other firms, requested a comprehensive analysis of the company's promotion and remuneration processes to ensure that the current employees are compensated and promoted according to their talent and professional abilities.   
 
 ### Research questions
-_Use bullet points to to describe the research questions you are going to address. Write in full sentences._
 
-## Is the artificial intellegence used in hiring process introduces preferences toward a particular group of people?
+To address Black Saber Software's concerns regarding their recruitment and compensation methods, the following research questions were stated.
 
-_For each research question, you will want to briefly describe any data manipulation, show some exploratory plots/summary tables, report on any methods you use (i.e. models you fit) and the conclusions you draw from these_
+- Is the AI-automated hiring process biased against any category of gender?
+Here, I employed four datasets on new graduates who applied in 2020 and explored three recorded gender categories - "Man", "Woman", and "Prefer not to say". 
+
+- Are employees promoted fairly based on their talents and professional achievements?
+Analysis of this question was defined by the data on current employees collected quarterly from 2013 to 2020.
+
+- Is salary calculated according to employees' performance?
+The same current employees’ data as in the previous research question was used. Such metrics as productivity and leadership skills among others will be evaluated to find an evidence pro or against gender bias.
+
+
+## RQ1: Is the AI-automated hiring process biased against any category of gender?
+ 
+
 
 ```{r, include = FALSE}
 library(tidyverse)
 library(lme4)
+library(magick)
+library(webshot)
+library(ggpubr)
+library(knitr)
+library(kableExtra)
+library(lubridate)
+library(pscl)
+# install.packages("magick")
+# install.packages("webshot")
+# webshot::install_phantomjs()
 ```
 
 ```{r, include = FALSE}
@@ -77,53 +115,257 @@ ph1_appl <- read_csv("data/phase1-new-grad-applicants-2020.csv")
 ph2_appl <- read_csv("data/phase2-new-grad-applicants-2020.csv")
 ph3_appl <- read_csv("data/phase3-new-grad-applicants-2020.csv")
 
+final_hires <- read_csv("data/final-hires-newgrad_2020.csv")
 ```
 
-### Phase 1 EDA
-```{r}
-library(ggpubr)
+
+To answer the topic question, I found Phase 2 data most helpful as it contained the AI-rated metrics such as technical, writing, speaking, and leadership skills. Since the AI assessed the technical skills similar to the writing based on a timed task and measured on the same scale from 0 to 100, I combined the skills in one column to use as a response variable. Similarly, I have grouped the speaking and leadership skills as they were estimated via pre-recorded videos on identical scale from 0 to 10. Figure 3 illustrates that for technical, writing, and leadership tasks most of the candidates were given a score between 25th to 75th percentiles (the variables follow a normal distribution); the scores for the speaking skills were slightly right-skewed.
+
+
+```{r, message = FALSE}
+# pivot_longer:
+
+ph2_l1 <- ph2_appl %>% 
+  pivot_longer(cols = 9:10, names_to = "tech_writ", values_to = "val_tech_writ")
+
+# final data combined
+ph2_l2 <- ph2_l1 %>% 
+  pivot_longer(cols = 9:10, names_to = "lead_speak", values_to = "val_lead_speak")
+
+```
+
+```{r fig.cap="For technical, writing, and leadership tasks most of the candidates were given a score between 25th to 75th percentiles (the variables follow a normal distribution); the scores for the speaking skills were slightly right-skewed.", message = FALSE}
+tw <- ph2_l2 %>% 
+  ggplot(aes(val_tech_writ, fill = gender)) +
+  geom_bar() +
+  facet_wrap(~tech_writ) +
+  theme_bw() +
+  scale_fill_manual(values = c("#E59866", "#ABEBC6", "#83A5BA"))+
+  theme(legend.title = element_blank(),
+        #axis.text.x = element_blank(),
+        axis.title = element_blank(),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5))+
+  labs(title = "",
+       subtitle = "",
+       x = "",
+       y = "")
+       #caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()))
+  
+
+ls <- ph2_l2 %>% 
+  ggplot(aes(val_lead_speak, fill = gender)) +
+  geom_bar() +
+  facet_wrap(~lead_speak)+
+  theme_bw() +
+  scale_fill_manual(values = c("#E59866", "#ABEBC6", "#83A5BA"))+
+  theme(legend.title = element_blank(),
+        #axis.text.x = element_blank(),
+        axis.title = element_blank(),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5))+
+  labs(title = "",
+       subtitle = "",
+       x = "",
+       y = "",
+       caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()))
+
+fig_twls <- ggarrange(tw, ls,
+                    ncol = 1, nrow = 2,
+                    common.legend = TRUE)
+fig_twls
+
+```
+
+
+On average, women were ahead of men in technical and writing tasks, and behind men in speaking and leadership skills; those who preferred to not disclose their gender scored higher or at par across categories (Table 1). I will get back to the results reflected in the Table 1 further in the analysis.
+
+
+```{r, message = FALSE}
+
+ph2_grouped <- ph2_appl %>% 
+  group_by(gender) %>% 
+  summarise(mean_gpa = mean(gpa),
+            #mean_extracurr = mean(extracurriculars),
+            mean_workexp = mean(work_experience),
+            mean_tech = mean(technical_skills),
+            mean_writ = mean(writing_skills),
+            mean_speak = mean(speaking_skills),
+            mean_leader = mean(leadership_presence))
+
+kable(ph2_grouped,
+      col.names = c("Gender",
+                    "GPA",
+                    "WorkExp",
+                    "Technical",
+                    "Writing",
+                    "Speaking",
+                    "Leadership"),
+      caption = "Average values for main parameteres of interest")
+
+# ph2_grouped_long <- ph2_grouped %>% 
+#   pivot_longer(5:8, 
+#                names_to = "skills_ph2")
+# 
+# ph2_grouped_long %>% 
+#   ggplot(aes(value, fill = skills_ph2)) +
+#   geom_histogram() +
+#   facet_wrap(~gender)
+```
+
+
+Before diving into modeling, the following exploratory analysis paints some valuable patterns in gender distribution across various categories such as hiring teams, candidates' extracurricular activities, and their work experience and GPA. Please note that as the number of the candidates reduce drastically from phase to phase, the scales of the following several visuals were not necessarily equal to emphasize the comparison only. 
+
+Figure 4 demonstrates that all gender categories were represented equally with strong skewness toward men candidates and disappearing of the undisclosed gender category in the phase 3.
+
+
+```{r fig.cap="All gender categories were represented equally with strong skewness toward men candidates and unrepresented undisclosed gender category in phase 3", message = FALSE}
+
 # Gender distr.
 ph1_gen <- ph1_appl %>% 
   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
   ggplot(aes(x = gender, fill = gender)) +
   geom_bar(color = "gray") +
   theme_minimal() +
-  labs(caption = "Gender distribution", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D")) +
-  theme(legend.position = 0)+
+  labs(caption = "", x = "", y = "",
+       subtitle = "Phase1") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA", "#ABEBC6")) +
+  theme(legend.title = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5),
+        plot.subtitle = element_text(size = 6))+
   lims(y = c(0, 400))
 
+#ggsave("images/gender.png", width = 7, height = 4)
+
+# Gender distr.
+ph2_gen <- ph2_appl %>% 
+  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+  ggplot(aes(x = gender, fill = gender)) +
+  geom_bar(color = "gray") +
+  theme_minimal() +
+  labs(caption = "", x = "", y = "",
+       subtitle = "Phase1") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA", "#ABEBC6")) +
+  theme(legend.title = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5),
+        plot.subtitle = element_text(size = 6)) +
+  lims(y = c(0, 200))
 # save your plot in your images folder, you can specify the height and width, too
 
-#ggsave("images/gender.png", width = 7, height = 4)
+# ggsave("images/gender.png", width = 7, height = 4)
+
+# Find out applicants' gender for phase 3 dataset:
+
+joined <- left_join(ph3_appl, ph2_appl)
+
+# just gender:
+ph3_gen <- joined %>% 
+  #mutate(applicant_id = as.factor(applicant_id)) %>%
+  #mutate(speaking_skills = as.factor(speaking_skills)) %>%
+  #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+  ggplot(aes(x = gender, fill = gender)) +
+  geom_histogram(stat = "count", color = "gray") +
+  theme_minimal() +
+  labs(caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()),
+       x = "", y = "",
+       subtitle = "Phase1") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA"))+
+  #scale_color_manual(values = c("black", "red"))+
+  lims(y = c(0, 50))+
+  theme(legend.title = element_blank(),
+        #legend.position = c(.8, .8),
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5),
+        plot.subtitle = element_text(size = 6))
+
+gen_1_2_3 <- ggarrange(ph1_gen, ph2_gen, ph3_gen,
+                    # labels = c("Phase1", 
+                    #            "Phase2",
+                    #            "Phase3"),
+                    ncol = 3, nrow = 1,
+                    common.legend = TRUE
+                    )
+gen_1_2_3
+ggsave("images/gender_es.png", width = 4, height = 1.5)
 ```
 
 
 ```{r}
-# Team applied for
-ph1_gen_team <- ph1_appl %>% 
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  #pivot_wider(names_from = gender, values_from = gpa) %>% 
-  ggplot(aes(x = team_applied_for, fill = gender)) +
-  geom_histogram(color = "gray", stat = "count") +
-  theme_minimal() +
-  labs(caption = "Team", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D")) +
-  lims(y = c(0, 400)) +
-  theme(legend.title = element_blank(),
-        legend.position = c(.15, .8))
 
-fig_g_t_ph1 <- ggarrange(ph1_gen, ph1_gen_team,
-                    ncol = 2, nrow = 1,
-                    common.legend = TRUE)
-fig_g_t_ph1
+### Fig XX Team applied for 
+# Team applied for
+# ph1_gen_team <- ph1_appl %>% 
+#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   #pivot_wider(names_from = gender, values_from = gpa) %>% 
+#   ggplot(aes(x = team_applied_for, fill = gender)) +
+#   geom_histogram(color = "gray", stat = "count") +
+#   theme_minimal() +
+#   labs(caption = "Team", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D")) +
+#   lims(y = c(0, 400)) +
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.15, .8))
+
+# fig_g_t_ph1 <- ggarrange(ph1_gen, ph1_gen_team,
+#                     ncol = 2, nrow = 1,
+#                     common.legend = TRUE)
+# fig_g_t_ph1
 # save your plot in your images folder, you can specify the height and width, too
 
 #ggsave("images/gpa.png", width = 7, height = 4)
+
+# Team applied for
+# ph2_gen_team <- ph2_appl %>% 
+#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   #pivot_wider(names_from = gender, values_from = gpa) %>% 
+#   ggplot(aes(x = team_applied_for, fill = gender)) +
+#   geom_histogram(color = "gray", stat = "count") +
+#   theme_minimal() +
+#   labs(caption = "Team - phase2", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D")) +
+#   lims(y = c(0, 200)) +
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.15, .8))
+
+
+#by team:
+# ph3_gender <- joined %>% 
+#   #mutate(applicant_id = as.factor(applicant_id)) %>%
+#   #mutate(speaking_skills = as.factor(speaking_skills)) %>%
+#   #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   ggplot(aes(x = team_applied_for, fill = gender, color = gender)) +
+#   geom_histogram(stat = "count", color = "gray") +
+#   theme_minimal() +
+#   labs(caption = "Gender", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6"))+
+#   #scale_color_manual(values = c("black", "red"))+
+#   #lims(y = c(0, 30))+
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.8, .8))
+# 
+# fig_team <- ggarrange(ph1_gen_team, ph2_gen_team, ph3_gender,
+#                      ncol = 3, nrow = 1,
+#                      common.legend = TRUE)
+# fig_team
 ```
 
+Candidates' extracurricular activities were coded as 0 for no extracurriculars, 1 for "some relevant and/or skills building extracurriculars", and 2 indicating "several high relevance and/or skills building extracurriculars". In phase 3, there were considerably more men in the lower extracurricular category (Figure 5).
 
-```{r}
+
+```{r fig.cap = "In phase 3, there were considerably more men in the lower extracurricular category."}
 # Extracur -Gender
 ph1_gen_extracur <- ph1_appl %>% 
   #mutate(extracurriculars = as.factor(extracurriculars)) %>% 
@@ -131,218 +373,19 @@ ph1_gen_extracur <- ph1_appl %>%
   ggplot(aes(x = extracurriculars, fill = gender)) +
   geom_bar(color = "gray") +
   theme_minimal() +
-  labs(caption = "Extracurricular", x = " ", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 500))+
+  labs(caption = "", x = " ", y = "") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA", "#ABEBC6"))+
+  lims(y = c(0, 400))+
   theme(legend.title = element_blank(),
-        legend.position = c(.15, .8))
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5))
 
 # save your plot in your images folder:
-ggsave("images/extracur_gen.png", width = 7, height = 4)
+#ggsave("images/extracur_gen.png", width = 7, height = 4)
 
-```
-
-
-
-```{r}
-# Work exp - Gender
-ph1_gen_workexp <- ph1_appl %>% 
-  mutate(applicant_id = as.factor(applicant_id)) %>%
-  mutate(work_experience = as.factor(work_experience)) %>%
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = work_experience, fill = gender)) +
-  geom_bar(color = "gray") +
-  theme_minimal() +
-  labs(caption = "Work exp", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 500))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.15, .8))
-
-# save your plot in your images folder, you can specify the height and width, too
-
-ggsave("images/work_gen.png", width = 7, height = 4)
-
-fig_e_w_ph1 <- ggarrange(ph1_gen_extracur, ph1_gen_workexp,
-                    ncol = 2, nrow = 1,
-                    common.legend = TRUE)
-fig_e_w_ph1
-
-#ggsave("images/work_gen.png", width = 7, height = 4)
-```
-
-
-
-
-```{r}
-# GPA
-ph1_gen_gpa <- ph1_appl %>% 
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = gpa, fill = gender)) +
-  geom_histogram(color = "gray") +
-  theme_minimal() +
-  labs(caption = "GPA", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 25))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
-  facet_wrap(~gender)
-ph1_gen_gpa
-
-
-# save your plot in your images folder, you can specify the height and width, too
-
-ggsave("images/gpa.png", width = 7, height = 4)
-```
-
-
-![GPA by gender](images/gpa.png)
-
-```{r}
-# # GPA - Man:
-# ph1_gpa_m <- ph1_appl %>% 
-#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-#   pivot_wider(names_from = gender, values_from = gpa) %>% 
-#   ggplot(aes(x = `Man`)) +
-#   geom_histogram(fill = "#83A5BA", color = "gray") +
-#   theme_minimal() +
-#   labs(caption = "GPA", x = "", y = "")+
-#   lims(y = c(0, 20))
-#   # scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))
-# ph1_gpa_m
-# 
-# #GPA - Woman
-# ph1_gpa_w <- ph1_appl %>% 
-#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-#   pivot_wider(names_from = gender, values_from = gpa) %>% 
-#   ggplot(aes(x = `Woman`)) +
-#   geom_histogram(fill = "#86BCB6", color = "gray") +
-#   theme_minimal() +
-#   labs(caption = "GPA", x = "", y = "")+
-#   lims(y = c(0, 25))
-#   # scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))
-# ph1_gpa_w
-# 
-# #GPA - Prefer not to say
-# ph1_gpa_p <- ph1_appl %>% 
-#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-#   pivot_wider(names_from = gender, values_from = gpa) %>% 
-#   ggplot(aes(x = `Prefer not to say`)) +
-#   geom_histogram(fill = "#B9CA5D", color = "gray") +
-#   theme_minimal() +
-#   labs(caption = "GPA", x = "", y = "")
-#   # scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))
-# ph1_gpa_p
-```
-
-
-
-### Phase 2 EDA
-
-```{r}
-# Gender distr.
-ph2_gen <- ph2_appl %>% 
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = gender, fill = gender)) +
-  geom_bar(color = "gray") +
-  theme_minimal() +
-  labs(caption = "Gender distribution - phase2", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D")) +
-  theme(legend.title = element_blank()) +
-  lims(y = c(0, 200))
-# save your plot in your images folder, you can specify the height and width, too
-
-# ggsave("images/gender.png", width = 7, height = 4)
-```
-
-
-
-```{r}
-# Team applied for
-ph2_gen_team <- ph2_appl %>% 
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  #pivot_wider(names_from = gender, values_from = gpa) %>% 
-  ggplot(aes(x = team_applied_for, fill = gender)) +
-  geom_histogram(color = "gray", stat = "count") +
-  theme_minimal() +
-  labs(caption = "Team - phase2", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D")) +
-  lims(y = c(0, 200)) +
-  theme(legend.title = element_blank(),
-        legend.position = c(.15, .8))
-
-
-fig_g_t_ph2 <- ggarrange(ph2_gen, ph2_gen_team,
-                    ncol = 2, nrow = 1,
-                    common.legend = TRUE)
-fig_g_t_ph2
-# save your plot in your images folder, you can specify the height and width, too
-
-#ggsave("images/gpa.png", width = 7, height = 4)
-```
-
-```{r}
-# GPA
-
-
-ph2_gen_gpa <- ph2_appl %>% 
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  #pivot_wider(names_from = gender, values_from = gpa) %>% 
-  ggplot(aes(x = gpa, fill = gender)) +
-  geom_histogram(color = "gray") +
-  theme_minimal() +
-  labs(caption = "GPA", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 20))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
-  facet_wrap(~gender)
-ph2_gen_gpa
-
-# save your plot in your images folder, you can specify the height and width, too
-
-#ggsave("images/gpa.png", width = 7, height = 4)
-```
-
-```{r}
-# # GPA - Man:
-# ph2_gpa_m <- ph2_appl %>% 
-#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-#   pivot_wider(names_from = gender, values_from = gpa) %>% 
-#   ggplot(aes(x = `Man`)) +
-#   geom_histogram(fill = "#83A5BA", color = "gray") +
-#   theme_minimal() +
-#   labs(caption = "GPA", x = "", y = "")+
-#   lims(y = c(0, 20))
-#   # scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))
-# ph2_gpa_m
-# 
-# #GPA - Woman
-# ph2_gpa_w <- ph2_appl %>% 
-#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-#   pivot_wider(names_from = gender, values_from = gpa) %>% 
-#   ggplot(aes(x = `Woman`)) +
-#   geom_histogram(fill = "#86BCB6", color = "gray") +
-#   theme_minimal() +
-#   labs(caption = "GPA", x = "", y = "")+
-#   lims(y = c(0, 25))
-#   # scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))
-# ph2_gpa_w
-# 
-# #GPA - Prefer not to say
-# ph2_gpa_p <- ph2_appl %>% 
-#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-#   pivot_wider(names_from = gender, values_from = gpa) %>% 
-#   ggplot(aes(x = `Prefer not to say`)) +
-#   geom_histogram(fill = "#B9CA5D", color = "gray") +
-#   theme_minimal() +
-#   labs(caption = "GPA", x = "", y = "")
-#   # scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))
-# ph2_gpa_p
-```
-
-
-```{r}
 # Extracur -Gender
 ph2_gen_extracur <- ph2_appl %>% 
   mutate(extracurriculars = as.factor(extracurriculars)) %>% 
@@ -350,163 +393,577 @@ ph2_gen_extracur <- ph2_appl %>%
   ggplot(aes(x = extracurriculars, fill = gender)) +
   geom_bar(color = "gray") +
   theme_minimal() +
-  labs(caption = "Extracurricular - phase2", x = " ", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 250))+
+  labs(caption = " ", x = " ", y = "") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA", "#ABEBC6"))+
+  lims(y = c(0, 200))+
   theme(legend.title = element_blank(),
-        legend.position = c(.8, .8))
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5))
 
 
+ph3_gen_extracur <- joined %>% 
+  mutate(extracurriculars = as.factor(extracurriculars)) %>% 
+  #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>%
+  ggplot(aes(x = extracurriculars, fill = gender)) +
+  geom_bar(color = "gray") +
+  theme_minimal() +
+  labs(caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()), x = " ", y = "") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA", "#ABEBC6"))+
+  lims(y = c(0, 25))+
+  theme(legend.title = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        #legend.position =  "none",
+        plot.caption = element_text(size = 5))
+
+fig_extracurr <- ggarrange(ph1_gen_extracur, ph2_gen_extracur, ph3_gen_extracur,
+                     ncol = 3, nrow = 1,
+                     common.legend = TRUE)
+fig_extracurr
 # save your plot in your images folder:
 #ggsave("images/extracur_gen.png", width = 7, height = 4)
 
 ```
 
 
+
+
+```{r, message = FALSE}
+### FigXX GPA
+# GPA
+# ph1_gen_gpa <- ph1_appl %>% 
+#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   ggplot(aes(x = gpa, fill = gender)) +
+#   geom_histogram(color = "gray") +
+#   theme_minimal() +
+#   labs(caption = "GPA", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
+#   lims(y = c(0, 25))+
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.8, .8)) +
+#   facet_wrap(~gender)
+
+# ggsave("images/gpa.png", width = 7, height = 4)
+
+# GPA
+
+
+# ph2_gen_gpa <- ph2_appl %>% 
+#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   #pivot_wider(names_from = gender, values_from = gpa) %>% 
+#   ggplot(aes(x = gpa, fill = gender)) +
+#   geom_histogram(color = "gray") +
+#   theme_minimal() +
+#   labs(caption = "GPA", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
+#   lims(y = c(0, 20))+
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.8, .8)) +
+#   facet_wrap(~gender)
+
+
+# ph3_gen_gpa <- joined %>% 
+#   #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   #pivot_wider(names_from = gender, values_from = gpa) %>% 
+#   ggplot(aes(x = gpa, fill = gender)) +
+#   geom_histogram(color = "gray") +
+#   theme_minimal() +
+#   labs(caption = "GPA", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6"))+
+#   lims(y = c(0, 5))+
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.8, .8)) +
+#   facet_wrap(~gender)
+# 
+# 
+# fig_gpa <- ggarrange(ph1_gen_gpa, ph2_gen_gpa, ph3_gen_gpa,
+#                      ncol = 2, nrow = 2,
+#                      common.legend = TRUE)
+# fig_gpa
+
+
+# save your plot in your images folder, you can specify the height and width, too
+
+#ggsave("images/gpa.png", width = 7, height = 4)
+```
+
+
+
+
 ```{r}
+
+### FigXX Work exp
 # Work exp - Gender
-ph2_gen_workexp <- ph2_appl %>% 
-  mutate(applicant_id = as.factor(applicant_id)) %>%
-  mutate(work_experience = as.factor(work_experience)) %>%
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = work_experience, fill = gender)) +
-  geom_bar(color = "gray") +
+# ph1_gen_workexp <- ph1_appl %>% 
+#   mutate(applicant_id = as.factor(applicant_id)) %>%
+#   mutate(work_experience = as.factor(work_experience)) %>%
+#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   ggplot(aes(x = work_experience, fill = gender)) +
+#   geom_bar(color = "gray") +
+#   theme_minimal() +
+#   labs(caption = "Work exp", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
+#   lims(y = c(0, 500))+
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.15, .8))
+# 
+# # ggsave("images/work_gen.png", width = 7, height = 4)
+# # 
+# # fig_e_w_ph1 <- ggarrange(ph1_gen_extracur, ph1_gen_workexp,
+# #                     ncol = 2, nrow = 1,
+# #                     common.legend = TRUE)
+# # fig_e_w_ph1
+# 
+# # Work exp - Gender
+# ph2_gen_workexp <- ph2_appl %>% 
+#   mutate(applicant_id = as.factor(applicant_id)) %>%
+#   mutate(work_experience = as.factor(work_experience)) %>%
+#   mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   ggplot(aes(x = work_experience, fill = gender)) +
+#   geom_bar(color = "gray") +
+#   theme_minimal() +
+#   labs(caption = "Work exp-phase2", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
+#   lims(y = c(0, 250))+
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.8, .8))
+# 
+# ph3_gen_workexp <- joined %>% 
+#   mutate(applicant_id = as.factor(applicant_id)) %>%
+#   mutate(work_experience = as.factor(work_experience)) %>%
+#   #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
+#   ggplot(aes(x = work_experience, fill = gender)) +
+#   geom_bar(color = "gray") +
+#   theme_minimal() +
+#   labs(caption = "Work exp-phase2", x = "", y = "") +
+#   scale_fill_manual(values = c("#83A5BA", "#86BCB6"))+
+#   lims(y = c(0, 25))+
+#   theme(legend.title = element_blank(),
+#         legend.position = c(.8, .8))
+# 
+# fig_wexp <- ggarrange(ph1_gen_workexp, ph2_gen_workexp, ph3_gen_workexp,
+#                     ncol = 3, nrow = 1,
+#                     common.legend = TRUE)
+# fig_wexp
+# # save your plot in your images folder, you can specify the height and width, too
+# 
+# ggsave("images/extra_work_gen.png", width = 7, height = 4)
+```
+
+
+Since it was clear from the preceding exploratory analysis that in spite of similar ranking, Phase 3 gender distribution was skewed toward "Man" category (Figure 4). To further investigate the trend and answer the first research question - Is the AI-automated hiring process biased against any category of gender? - my first choice was a linear model as the outcome of interest was candidates' skills scores measured on a continuous scale. Since I introduced two response variables - combined technical and writing as one, and leadership and speaking as second - I fitted two regressions and reported two separate results (referred to as Regression 1 and Regression 2). The predictors for both regressions were applicants' gender, their GPA, extracurricular activities, and work experience. After comparing nested models to find the best fitting one, the predictors differed slightly for two models. Further, Figure 6 demonstrates that all linear regression assumptions were met, except for independence assumption as there were repeated measures for each applicant. Considering non-independence between groups and the repeated measures, I narrowed down my model choice to a linear mixed model with random intercepts estimated for each applicant.
+
+
+```{r, message = FALSE}
+
+# modify the data to factorize vars:
+
+ph2_fac <- ph2_l2 %>% 
+  mutate(team_applied_for = as.factor(team_applied_for),
+         gender = as.factor(gender),
+         extracurriculars = as.factor(extracurriculars),
+         work_experience = as.factor(work_experience),
+         applicant_id = as.factor(applicant_id)) %>%
+  select(-c(3:4))
+  
+
+```
+
+```{r fig.cap= "Linear regression assumptions check for RQ1.", fig.align='left', message = FALSE}
+
+par(mfrow = c(2, 4))
+lin_hire_mod <- lm(val_tech_writ~., data = ph2_fac)
+plot(lin_hire_mod,
+     main="",
+     sub="")
+
+lin_hire_mod1 <- lm(val_lead_speak~., data = ph2_fac)
+plot(lin_hire_mod1, main = "")
+```
+
+```{r}
+#glimpse(ph2_fac)
+
+lmm_tech_writ3 <- lmer(val_tech_writ ~ gender + gpa + extracurriculars + work_experience + (1 | applicant_id), data = ph2_fac)
+
+lmm_tech_writ2 <- lmer(val_tech_writ ~ gender + gpa + extracurriculars + (1 | applicant_id), data = ph2_fac)
+
+# Winner:
+lmm_tech_writ1 <- lmer(val_tech_writ ~ gender + gpa + (1 | applicant_id), data = ph2_fac)
+#summary(lmm_tech_writ1)
+
+lmm_tech_writ <- lmer(val_tech_writ ~ gender + (1 | applicant_id), data = ph2_fac)
+
+# lmtest::lrtest(lmm_tech_writ, lmm_tech_writ1, lmm_tech_writ2, lmm_tech_writ3)
+
+```
+
+### Results of Regression 1:
+
+The final best model that investigated whether  the technical and writing skills (measured from 0 to 100) of the candidates were assessed fairly used applicants' gender and GPA score as predictors. The skills were given a score of 14 points more for persons of unknown gender, and two points more for females compared to males with a baseline score of 13 points. Each point increase in the GPA score would have led to a 10-point increase in the overall skills score (Table 2).
+
+
+```{r, message = FALSE}
+# Confidence intervals
+techConfint = confint(lmm_tech_writ1)
+
+# Get the estimates
+ests <- format(round(summary(lmm_tech_writ1)$coeff)[,1], 2, nsmall = 2)
+
+# Get your confidence intervals
+cis <- format(round(techConfint,2)[-1,], nsmall = 2)
+
+cis_pretty <- str_c("(", trimws(cis[-1,1]), ", ", cis[-1,2], ")")
+
+# names for the rows and columns
+rownames_for_table <- c("Baseline", "Undisclosed gender", "Woman","GPA")
+colnames_for_table <- c("Estimate", "95%CI")
+my_pretty_table <- cbind(ests, cis_pretty)
+rownames(my_pretty_table) <- rownames_for_table
+colnames(my_pretty_table) <- colnames_for_table
+
+```
+
+```{r, message = FALSE, fig.align="left", fig.pos='H'}
+
+knitr::kable(my_pretty_table, 
+             #align = c("r", "r"),
+             caption = "Regression 1 results: The skills were given a score of 14 points more for persons of unknown gender, and 2 points more for females compared to males with a baseline score of 13 points.") %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+```
+
+
+### Results of Regression 2:
+
+The final best model that investigated whether leadership and speaking skills (measured from 0 to 10) of the candidates were assessed fairly, used applicants' gender, GPA score, and their extracurricular activities as predictors. In this model, applicants of undisclosed gender would receive about half a point more, whereas women would lose one point, which equals to 10% considering the scale. Each point increase in the GPA score would lead to about 1% increase in the overall skills score; the highly relevant extracurriculars would get 0.5 point more than less relevant ones (Appendix A).
+
+
+
+
+```{r, message = FALSE}
+
+lmm_lead_sp3 <- lmer(val_lead_speak ~ gender + gpa + extracurriculars + work_experience + (1 | applicant_id), data = ph2_fac)
+
+# Winner:
+lmm_lead_sp2 <- lmer(val_lead_speak ~ gender + gpa + extracurriculars + (1 | applicant_id), data = ph2_fac)
+#summary(lmm_lead_sp2)
+
+lmm_lead_sp1 <- lmer(val_lead_speak ~ gender + gpa + (1 | applicant_id), data = ph2_fac)
+#
+
+lmm_lead_sp <- lmer(val_lead_speak ~ gender + (1 | applicant_id), data = ph2_fac)
+
+# lmtest::lrtest(lmm_lead_sp, lmm_lead_sp1, lmm_lead_sp2, lmm_lead_sp3)
+
+```
+
+
+```{r, message = FALSE}
+
+# Confidence intervals
+leadConfint = confint(lmm_lead_sp2)
+
+# Get the estimates
+ests1 <- format(round(summary(lmm_lead_sp2)$coeff)[,1], 2, nsmall = 2)
+
+# Get your confidence intervals
+cis1 <- format(round(leadConfint,2)[-1,], nsmall = 2)
+
+cis_pretty1 <- str_c("(", trimws(cis1[-1,1]), ", ", cis1[-1,2], ")")
+
+# names for the rows and columns
+rownames_for_table1 <- c("Baseline", "Undisclosed gender", "Woman",
+                         "GPA", "Extracurricular")
+colnames_for_table1 <- c("Estimate", "95%CI")
+my_pretty_table1 <- cbind(ests1, cis_pretty1)
+rownames(my_pretty_table1) <- rownames_for_table1
+colnames(my_pretty_table1) <- colnames_for_table1
+
+```
+
+
+Possibly, the women candidates possessed weaker speaking and leadership skills, which showed in a recorded video. However, there was a chance that during the evaluation the AI exhibited a historic pre-existing bias against females being not presented as powerful leaders and influential speakers. The results of the Regression 1 potentially could serve as proof to the previous point as there was a very low to zero chance of recognizing gender through a technical or writing task.
+
+
+## RQ2: Are the systems used for promoting employees free from bias?
+
+Although the current employees’ data provided by the People and Talent department contained records starting from 2013, I have decided to include four years of data from 2017 to 2020 as the earlier data was very sparse. To address the second research question, I have created two additional variables to reflect increase in salaries and number of times employees have been promoted over the years. Figure 7 below shows that although there were more men than women in the company, gender was distributed evenly across the roles.
+
+```{r, message = FALSE}
+cur_empl <- read_csv("data/black-saber-current-employees.csv")
+```
+
+```{r, message = FALSE}
+
+empl_modif <- cur_empl %>% 
+  # mutate(gender = case_when(gender == "Man" ~ 1,
+  #                            gender == "Woman" ~ 0,
+  #                            gender == "Prefer not to say" ~ 2)) %>% 
+  mutate(gender = as.factor(gender)) %>% 
+  mutate(team = as.factor(team)) %>% 
+  mutate(role_seniority = as.factor(role_seniority),
+         role_seniority = fct_relevel(role_seniority, "Manager", after = 7),
+         role_seniority = fct_relevel(role_seniority, "Director", after = 7)) %>%
+  # mutate(role_seniority = 
+  #          case_when(role_seniority == "Entry-level" ~ 1,
+  #                    role_seniority == "Junior I" ~ 2,
+  #                    role_seniority == "Junior II" ~ 3,
+  #                    role_seniority == "Senior I" ~ 4,
+  #                    role_seniority == "Senior II" ~ 5,
+  #                    role_seniority == "Senior III" ~ 6,
+  #                    role_seniority == "Manager" ~ 7,
+  #                    role_seniority == "Director" ~ 8,
+  #                    role_seniority == "Vice president" ~ 9)) %>% 
+  mutate(leadership_for_level = 
+           case_when(leadership_for_level == "Appropriate for level" ~ 1,
+                     leadership_for_level == "Needs improvement" ~ 0,
+                     leadership_for_level == "Exceeds expectations" ~ 2)) %>% 
+  mutate(leadership_for_level = as.factor(leadership_for_level)) %>% 
+  mutate(financial_q = yq(financial_q)) %>% 
+  mutate(salary =  gsub("\\$","",salary)) %>% 
+  mutate(salary =  as.numeric(gsub(",","", salary))) %>% 
+  mutate(employee_id = as.factor(employee_id))
+
+```
+
+```{r fig.cap= "Although there were more men than women in the company, gender was distributed evenly across the roles", message = FALSE}
+empl_modif %>% 
+  ggplot(aes(role_seniority, fill = gender))+
+  geom_histogram(stat = "count", color = "gray")+
   theme_minimal() +
-  labs(caption = "Work exp-phase2", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 250))+
   theme(legend.title = element_blank(),
-        legend.position = c(.8, .8))
-
-fig_e_w_ph2 <- ggarrange(ph2_gen_extracur, ph2_gen_workexp,
-                    ncol = 2, nrow = 1,
-                    common.legend = TRUE)
-fig_e_w_ph2
-# save your plot in your images folder, you can specify the height and width, too
-
-ggsave("images/extra_work_gen.png", width = 7, height = 4)
+        #axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        legend.position =  c(0.8, 0.8),
+        plot.caption = element_text(size = 5))+
+  labs(caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()),
+       x = "")+
+  scale_fill_manual(values = c("#E59866", "#ABEBC6", "#83A5BA"))
 ```
 
-![Extracurricular and work experience by gender - phase2](images/extra_work_gen.png)
+
+```{r, message=FALSE, include=FALSE}
+
+# Remove up to year 2017:
+
+emp_2017_2020 <- empl_modif %>% 
+  filter(financial_q >= "2017-01-01")
+# summarize role-seniority
+emp_modif_senior <- emp_2017_2020  %>%
+  mutate(role_seniority =
+           case_when(role_seniority == "Entry-level" ~ 1,
+                     role_seniority == "Junior I" ~ 2,
+                     role_seniority == "Junior II" ~ 3,
+                     role_seniority == "Senior I" ~ 4,
+                     role_seniority == "Senior II" ~ 5,
+                     role_seniority == "Senior III" ~ 6,
+                     role_seniority == "Manager" ~ 7,
+                     role_seniority == "Director" ~ 8,
+                     role_seniority == "Vice president" ~ 9))
+
+
+emp_with_promo <- emp_modif_senior  %>% 
+  group_by(employee_id, gender)  %>%
+  summarise(start_date = min(financial_q),
+            end_date = max(financial_q),
+            years_work = end_date-start_date,
+            first_role = min(role_seniority),
+            last_role = max(role_seniority),
+            role_promo = last_role - first_role,
+            min_salary = min(salary), 
+            max_salary = max(salary),
+            promo_over_years = max_salary-min_salary) %>% 
+  mutate(years_work = as.numeric(round(years_work/365, 2))) %>% 
+  select(-end_date) %>% 
+  #mutate(role_promo = as.factor(role_promo)) %>% 
+  #mutate(role_promo = fct_relevel(role_promo, 0, before = 1)) %>% 
+  mutate(employee_id = as.factor(employee_id)) %>% 
+  mutate(role_promo = as.numeric(role_promo))
+
+```
+
+```{r, message = FALSE}
+emp_promo_2017_2020 <- left_join(emp_2017_2020, emp_with_promo)
+
+```
+
+
+Since the variable of interest was a number of times a person has been promoted over the years (a count variable) with a right-skewed distribution and a repeated measure of employees needed to be accounted for, a generalized linear mixed model with a Poisson distribution was a good fit. Additionally, many employees were not promoted yet because they joined the company very recently, suggesting that zero-inflated Poisson (ZIP) regression would be a better fit. I ran both GLMM and ZIP to test which model would be more improved and found out that the results of the ZIP were not statistically significant (Table 3). I proceeded with the GLMM, establishing that the outcome variable was not overdispersed, which satisfied a key Poisson assumption (Table 4). Further, the second assumption - Poisson response - was proved to be satisfactory as the response can be reasonably modeled with a Poisson distribution when grouped by a key explanatory variable: gender (Figure 8).
+
+
+```{r, message = FALSE}
+
+promo_zip <- zeroinfl(role_promo ~ gender , data = emp_promo_2017_2020)
+kable(coef(summary(promo_zip)),
+      caption = "Results for ZIP: the predictors are not statistically significant")
+```
+
 
 ```{r}
-# Tech skills
 
-ph2_tech <- ph2_appl %>% 
-  #mutate(applicant_id = as.factor(applicant_id)) %>%
-  #mutate(work_experience = as.factor(work_experience)) %>%
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = technical_skills, fill = gender)) +
-  geom_histogram(color = "gray") +
-  theme_minimal() +
-  labs(caption = "Tech", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 15))+
+#overdispersion:
+
+tab_promo <- emp_promo_2017_2020  %>% 
+  group_by(gender)  %>% 
+  summarise(mean=mean(role_promo), sd=sd(role_promo), 
+            var=var(role_promo), n=n())
+kable(tab_promo,
+      caption = "Established that the outcome variable was not overdispersed: mean = variance")
+
+```
+
+
+```{r fig.cap= "The second assumption - Poisson response - proved to be satisfactory: grouping the response by a key explanatory variable - gender", message = FALSE}
+emp_promo_2017_2020 %>% 
+  ggplot(aes(role_promo, fill = gender)) +
+  geom_histogram() + 
+  facet_wrap(~gender) +
+  theme_bw() +
   theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
-  facet_wrap(~gender)
-ph2_tech
-# save your plot in your images folder, you can specify the height and width, too
-
-#ggsave("images/work_gen.png", width = 7, height = 4)
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        legend.position =  "none",
+        plot.caption = element_text(size = 5))+
+  labs(caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()),
+       x = "Number of times employees were promoted")+
+  scale_fill_manual(values = c("#E59866", "#ABEBC6", "#83A5BA"))
 ```
 
 
-```{r}
-# Writing skills
+```{r, message=FALSE}
 
-ph2_writ <- ph2_appl %>% 
-  #mutate(applicant_id = as.factor(applicant_id)) %>%
-  #mutate(work_experience = as.factor(work_experience)) %>%
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = writing_skills, fill = gender)) +
-  geom_histogram(color = "gray") +
-  theme_minimal() +
-  labs(caption = "Writing", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 20))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
-  facet_wrap(~gender)
-ph2_writ
-# save your plot in your images folder, you can specify the height and width, too
-
-#ggsave("images/work_gen.png", width = 7, height = 4)
+promo_pois <- glmer(role_promo ~ gender + (1 | employee_id), family = poisson, data = emp_promo_2017_2020)
 ```
 
-```{r}
-# Leadership
+ 
+### Results of GLMM regression:
 
-ph2_lead <- ph2_appl %>% 
-  #mutate(applicant_id = as.factor(applicant_id)) %>%
-  mutate(leadership_presence = as.factor(leadership_presence)) %>%
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = leadership_presence, fill = gender)) +
-  geom_histogram(color = "gray", stat = "count") +
-  theme_minimal() +
-  labs(caption = "Writing", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 35))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
-  facet_wrap(~gender)
-ph2_lead
-# save your plot in your images folder, you can specify the height and width, too
+The GLMM with a Poisson distribution suggested the following results:
 
-#ggsave("images/work_gen.png", width = 7, height = 4)
-```
+- for "Prefer not to say" gender: $log(\lambda)$ = -1.27 - 0.45 = -1.72, and
 
-```{r}
-# Speaking
+- for women: $log(\lambda)$ = -1.27 - 0.9 = -1.17.
 
-ph2_speak <- ph2_appl %>% 
-  #mutate(applicant_id = as.factor(applicant_id)) %>%
-  mutate(speaking_skills = as.factor(speaking_skills)) %>%
-  mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = speaking_skills, fill = gender)) +
-  geom_histogram(color = "gray", stat="count") +
-  theme_minimal() +
-  labs(caption = "Writing", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(y = c(0, 30))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
-  facet_wrap(~gender)
-ph2_speak
-# save your plot in your images folder, you can specify the height and width, too
+The final best model that investigated whether employees were promoted fairly used employees' gender as a predictor. In this model, the odds of being promoted were about 0.3 to 1. Employees of undisclosed gender had 37% lower odds of getting promoted, and women had 60% lower odds of being promoted (Appendix B).
 
-#ggsave("images/work_gen.png", width = 7, height = 4)
+
+```{r, message=FALSE}
+# Confidence intervals
+promoConfint = confint(promo_pois)
+# Get the estimates
+ests_promo <- format(round(exp(summary(promo_pois)$coeff)[,1], 2), nsmall = 2)
+
+# Get your confidence intervals
+cis_promo <- format(round(exp(promoConfint),2)[-1,], nsmall = 2)
+
+cis_pretty_promo <- str_c("(", trimws(cis_promo[,1]), ", ", cis_promo[,2], ")")
+
+# names for the rows and columns
+rownames_for_table_promo <- c("Baseline odds", "Undisclosed gender","Woman")
+colnames_for_table_promo <- c("Estimate", "95%CI")
+my_pretty_table_promo <- cbind(ests_promo, cis_pretty_promo)
+rownames(my_pretty_table_promo) <- rownames_for_table_promo
+colnames(my_pretty_table_promo) <- colnames_for_table_promo
 ```
 
 
-### Phase 3 EDA
 
-```{r}
-# Find out applicants' gender for phase 3 dataset:
+## RQ3: Is salary calculated according to employees' performance?
 
-joined <- left_join(ph3_appl, ph2_appl)
+To test this question, a linear mixed model proved to be the best fit, since a response - salary - is a continuous variable (Figure 9), following a normal distribution. The model accounts for several observations for each employee and salary differences according to job roles, too.
+
+
+```{r fig.cap= "Salary distribution across gender categories"}
+emp_2017_2020 %>%
+  ggplot(aes(x = salary,
+            
+             color=gender)) +
+  geom_boxplot(alpha = 0.3) +
+  facet_wrap(~gender, nrow = 2) +
+  ggtitle(label="") +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.caption = element_text(size = 5)) +
+  scale_color_manual(values = c("#E59866", "#ABEBC6", "#83A5BA")) +
+  labs(caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()),
+       x = "Salary")
+  
+```
+
+
+
+```{r, message = F}
+#glimpse(emp_promo_2017_2020)
+
+sal_mod1 <- lmer(salary ~ gender + leadership_for_level + productivity + years_work  + (1 | employee_id) + (1 | role_seniority), data = emp_promo_2017_2020)
+
+sal_mod2 <- lmer(salary ~ gender + leadership_for_level + productivity +(1 | employee_id) + (1 | role_seniority), data = emp_promo_2017_2020)
+
+sal_mod3 <- lmer(salary ~ gender + leadership_for_level +(1 | employee_id) + (1 | role_seniority), data = emp_promo_2017_2020)
+
+# Winner:
+sal_mod4 <- lmer(salary ~ gender + (1 | employee_id) +(1 | role_seniority), data = emp_promo_2017_2020)
+#summary(sal_mod4)
+
+# test:
+#lmtest::lrtest(sal_mod1, sal_mod2, sal_mod3, sal_mod4)
 
 ```
 
-```{r}
+### Results of the LMM Regression:
 
-ph3_gender <- joined %>% 
-  #mutate(applicant_id = as.factor(applicant_id)) %>%
-  #mutate(speaking_skills = as.factor(speaking_skills)) %>%
-  #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = gender, fill = gender, color = team_applied_for)) +
-  geom_histogram(stat = "count") +
-  theme_minimal() +
-  labs(caption = "Gender", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6"))+
-  scale_color_manual(values = c("black", "red"))+
-  #lims(y = c(0, 30))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8))
-ph3_gender
+The final best model that investigated whether salary was calculated based on employees' performance was chosen by running a test on nested models and used employees' gender as a predictor. The baseline salary was $68,422. The employees who preferred to not disclose their gender had 726 dollars decrease in the salary. The model predicted even steeper salary decrease of 2,642 dollars for female employees. All these results were reflected in the Appendix C.
+
+
+```{r}
+# Confidence intervals
+salConfint = confint(sal_mod4)
+
+# Get the estimates
+ests_sal <- format(round(summary(sal_mod4)$coeff)[,1], 2, nsmall = 2)
+
+# Get your confidence intervals
+cis_sal <- format(round(salConfint,2)[-1,], nsmall = 2)
+
+cis_pretty_sal <- str_c("(", trimws(cis_sal[-c(1,2),1]), ", ", cis_sal[-c(1,2),2], ")")
+
+# names for the rows and columns
+rownames_for_table_sal <- c("Baseline", "Undisclosed gender", "Woman")
+colnames_for_table_sal <- c("Estimate", "95%CI")
+my_pretty_table_sal <- cbind(ests_sal, cis_pretty_sal)
+rownames(my_pretty_table_sal) <- rownames_for_table_sal
+colnames(my_pretty_table_sal) <- colnames_for_table_sal
+
 ```
 
-```{r}
+
+
+## Discussion
+
+
+This report analyzed three questions raised by Black Saber Software to uncover hidden biases in their hiring, promoting, and remunerating processes. Regrettably, the analysis exposed a strong unfairness toward female candidates and employees manifested both in the AI-automated systems and human-led assessments.
+
+I discovered some evidence that the new AI-automated candidates' selection system might exhibit bias against women when assessing the speaking and leadership skills via pre-recorded videos. This did not come as a big surprise as voice and image recognition systems have been historically demonstrating extreme biases as the underlying databases were created as such. This finding was strengthened by a fact that women's scores on technical and writing tasks did not differ from men’s as the tasks were performed without the use of candidates' images or voice.
+
+In the second question of potential biases in the systems used for promoting employees, I have explored a number of times employees got promoted over the four chosen years from 2017 to 2020.  These systems also proved to be biased against non-males with 60% lower odds of promotion for women and 37% lower odds for other employees of undisclosed gender.
+
+Finally, while testing several models to detect whether the employees were compensated proportionally to their professional achievements, none of the models picked up on indicators of concern such as employees' productivity, their leadership qualities, or duration of their service in the company. Instead, the successful model only accounted for gender of the employees, proving once again that, unfortunately, salaries were not calculated fairly.
+
+
+
+### Strengths and limitations
+
+One of the report's strengths was its complete reproducibility and ease of models’ adjustment. For instance, whenever there will be an ethnicity metric collected for job applicants and current employees, it can be added in the analysis for further review. In addition, I have discovered some patterns in the human interviewers in the last phase of the hiring, which I did not include in the main analysis as this was not explicitly requested. Figure 10 and Table 5 demonstrate that both interviewers tend to score men higher than women. Here, further investigation would be required.
+
+
+```{r fig.cap= "Both Interviewer 1 (left) and Interviewer 2 (right) tend to score men higher than women.", message = FALSE}
 # Int 1 rating by gender
 ph3_gen1 <- joined %>% 
   #mutate(applicant_id = as.factor(applicant_id)) %>%
@@ -515,17 +972,19 @@ ph3_gen1 <- joined %>%
   ggplot(aes(x = interviewer_rating_1, fill = gender)) +
   geom_histogram(color = "gray") +
   theme_minimal() +
-  labs(caption = "Int1 by gender", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6"))+
-  lims(x = c(60, 100))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
+  labs(caption = "", x = "Scores", y = "",
+       subtitle = "Interviewer 1") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA"))+
+  lims(x = c(60, 100), y = c(0,4))+
+  theme(legend.position =  "none",
+        strip.text = element_text(size = 5),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        plot.caption = element_text(size = 5),
+        axis.title = element_text(size = 5),
+        plot.subtitle = element_text(size = 6)) +
   facet_wrap(~gender)
-ph3_gen1
-```
 
-
-```{r}
 # Int 2 by gender
 
 ph3_gen2 <- joined %>% 
@@ -535,87 +994,97 @@ ph3_gen2 <- joined %>%
   ggplot(aes(x = interviewer_rating_2, fill = gender)) +
   geom_histogram(color = "gray") +
   theme_minimal() +
-  labs(caption = "Int1 by gender", x = "", y = "") +
-  scale_fill_manual(values = c("#83A5BA", "#86BCB6"))+
+  labs(caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date()), 
+       x = "Scores", y = "",
+       subtitle = "Interviewer 2") +
+  scale_fill_manual(values = c("#E59866", "#83A5BA"))+
   lims(x = c(60, 100))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) +
+  theme(legend.position =  "none",
+        strip.text = element_text(size = 5),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        plot.caption = element_text(size = 5),
+        axis.title = element_text(size = 5),
+        plot.subtitle = element_text(size = 6)) +
   facet_wrap(~gender)
-ph3_gen2
+fig_interv <- ggarrange(ph3_gen1, ph3_gen2,
+                    ncol = 2, nrow = 1)
+fig_interv
+ggsave("images/int1_2.png", width = 4, height = 1.5)
 ```
 
-```{r}
-# Interviewer 1
 
-ph3_int1 <- ph3_appl %>% 
-  mutate(applicant_id = as.factor(applicant_id)) %>%
-  #mutate(speaking_skills = as.factor(speaking_skills)) %>%
-  #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = interviewer_rating_1)) +
-  geom_histogram() +
-  theme_minimal() +
-  labs(caption = "Int1", x = "", y = "") +
-  #scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  #lims(y = c(0, 30))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) 
-ph3_int1
+```{r, message = FALSE}
 
-# Appl ID - int1
-ph3_int1_1 <- ph3_appl %>% 
-  mutate(applicant_id = as.factor(applicant_id)) %>%
-  #mutate(speaking_skills = as.factor(speaking_skills)) %>%
-  #mutate(gender = fct_relevel(gender, "Prefer not to say", after = 2)) %>% 
-  ggplot(aes(x = interviewer_rating_1, y = applicant_id)) +
-  geom_col() +
-  theme_minimal() +
-  labs(caption = "Int1", x = "", y = "") +
-  #scale_fill_manual(values = c("#83A5BA", "#86BCB6", "#B9CA5D"))+
-  lims(x = c(0, 100))+
-  theme(legend.title = element_blank(),
-        legend.position = c(.8, .8)) 
-ph3_int1_1
+#glimpse(joined)
 
+joined2_3_grouped <- joined %>% 
+  group_by(gender) %>% 
+  summarise(
+    
+    r1_min = min(interviewer_rating_1),
+    r1_max = max(interviewer_rating_1),
+    r2_min = min(interviewer_rating_2),
+    r2_max = max(interviewer_rating_2))
 
-# save your plot in your images folder, you can specify the height and width, too
+kable(joined2_3_grouped,
+    col.names = c("Gender",
+                    "Min1",
+                    "Max1",
+                    "Min2",
+                    "Max2"),
+    caption = "Interviewer 1 and 2: minimum and maximum scores for male and female candidates")
 
-#ggsave("images/work_gen.png", width = 7, height = 4)
 ```
 
-## Are the systems used for promoting employees free from bias?
-## Is salary calculated appropriately and according to employees' work experience and performance?
 
-```{r}
-# This chunk provides an example of some things you can do with RMarkdown to make your report creation process easier
+I limited the analysis to four years of the data on current employees as 2013 to 2016 had inadequate amount of data. My choice was also supported by the exploration of salary promotions in the original and reduced data. Figures 11 and 12 demonstrated clearly that men were promoted considerably more frequently in both cases. However, this limitation might have influenced the results in an unpredicted way.
 
-# read in the data
-black_saber_current_employees <- read_csv("data/black-saber-current-employees.csv")
 
-# create a visualisation
-my_plot <- black_saber_current_employees %>% 
-  ggplot(aes(x = productivity)) +
-  geom_histogram(colour = "grey", fill = "#6C3082") +
-  theme_minimal() +
-  labs(title = "Look! A title. But do you want a title or a caption for your report?", x = "This is a changed x label")
+```{r fig.cap= "Increase in salaries by years of service and number of promotions. Original dataset containing data from 2013 to 2020: Men were promoted more frequently", fig.align= "left"}
+emp_with_promo %>% 
+  ggplot(aes(years_work, promo_over_years, color = gender)) +
+  geom_point(alpha=0.7, position=position_jitter(height=0, width=0.7)) +
+  facet_wrap(~role_promo) + 
+  theme_bw() +
+  scale_color_manual(values =c("#E59866", "#ABEBC6", "#83A5BA"))+
+  labs(x = "Years of service",
+       y = "Increase in salaries",
+       caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date())) +
+  theme(legend.position =  "bottom",
+        legend.title = element_blank(),
+        plot.caption = element_text(size = 5))
 
-# save your plot in your images folder, you can specify the height and width, too
-
-ggsave("images/example.png", width = 7, height = 4)
 ```
 
 
 
-## Discussion
+```{r fig.cap = "Increase in salaries by years of service and number of promotions. In last four years the situation did not improve: still more men were promoted.", message = FALSE, fig.align= "left"}
+emp_promo_2017_2020 %>% 
+  ggplot(aes(years_work, promo_over_years, color = gender)) +
+  geom_point(alpha=0.5, position=position_jitter(height=0, width=0.5)) +
+  facet_wrap(~role_promo)+ 
+  theme_bw() +
+  scale_color_manual(values =c("#E59866", "#ABEBC6", "#83A5BA")) +
+  labs(x = "Years of service",
+       y = "Increase in salaries",
+       caption = str_c("Prepared by Core Data Consultancy \n", Sys.Date())) +
+  theme(legend.position =  "bottom",
+        legend.title = element_blank(),
+        plot.caption = element_text(size = 5))
 
-_In this section you will summarize your findings across all the research questions and discuss the strengths and limitations of your work. It doesn't have to be long, but keep in mind that often people will just skim the intro and the discussion of a document like this, so make sure it is useful as a semi-standalone section (doesn't have to be completely standalone like the executive summary)._
+```
 
-### Strengths and limitations
+In addition, while tackling the research question 2 - Are the systems used for promoting employees free from bias? - I have not explored an increase in salaries as an outcome of interest. This parameter might have behaved differently than the number of times employees got promoted.
+
 
 \newpage
+
 # Consultant information
 ## Consultant profile
 
-**Asel Kushkeyeva**. Asel has been in an independent consultancy since 2021. Her firm, Core Data Consultancy, has been recognized among leading Canadian consultancies. In 2022, Asel has won a prestigious The Canadian Journal of Statistics Award. She specializes in reproducible analysis, statistical communication, and data visualization. Asel earned her Masters of Information, Specialist in Human-Centered Data Science, from the University of Toronto in 2021.
+**Asel Kushkeyeva**. Asel has been in an independent consultancy since 2021. Her firm, Core Data Consultancy, has been recognized among leading Canadian consultancies. In 2022, Asel has won a prestigious The Canadian Journal of Statistics Award. She specializes in reproducible analysis, statistical communication, and data visualization. Asel earned her Master of Information, Specialist in Human-Centered Data Science, from the University of Toronto in 2021.
+
 
 ## Code of ethical conduct
 
@@ -629,6 +1098,42 @@ Continuously providing professional services, Core Data Consultancy strives for 
 
 **3. Responsibilities to Science, Public, and Client**
 
-Being a noticeable/mature player in the area of independent statistical analysis, Core Data Consultancy holds itself responsible to science, public, and clients by adhering to science and industry ethical standards, considering public interests, and going above and beyond to keep clients' information secure at all times.
+Being a mature player in the field of independent statistical analysis, Core Data Consultancy holds itself responsible to science, public, and clients by adhering to science and industry ethical standards, considering public interests, and going above and beyond to keep clients' information secure at all times.
 
-__Final advice: KNIT EARLY AND OFTEN!__
+\newpage
+# Appendix A
+
+
+```{r, message = FALSE, fig.align="left", fig.pos='H'}
+
+knitr::kable(my_pretty_table1, 
+             #align = c("r", "r"),
+             
+             caption = " Appendix A. Regression 2 results: Applicants of undisclosed gender would receive about half a point more, whereas women would lose about 10% in score.") %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+```
+
+
+# Appendix B
+
+```{r, message = FALSE, fig.align="left", fig.pos='H'}
+
+knitr::kable(my_pretty_table_promo, align = c("r", "r"),
+             caption = "Appendix B. GLMM with a Poisson distribution results: Employees of undisclosed gender had 37% lower odds of getting promoted, and women had 60% lower odds of being promoted.") %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+```
+
+
+# Appendix C
+```{r, message = FALSE, fig.align="left", fig.pos='H'}
+
+knitr::kable(my_pretty_table_sal, 
+             #align = c("r", "r"),
+             caption = "Results of the salary model: The employees who preferred to not disclose their gender had 726 dollars decrease in the salary; predicted even steeper salary decrease of 2,642 dollars for female employees") %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+
+```
+
